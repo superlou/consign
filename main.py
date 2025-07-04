@@ -109,7 +109,7 @@ async def get_sessions(guide: int | None = None):
     return build_df_response(df)
 
 
-@app.get("/svc/pull/{con}")
+@app.post("/svc/pull/{con}")
 async def pull_guidebook_data(con: str):
     guidebook = Guidebook(os.environ["GUIDEBOOK_API_KEY"])
     guide_id = {"otakon25": 208676}[con]
