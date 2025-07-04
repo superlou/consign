@@ -9,6 +9,7 @@ dependencies = [
     "google-api-python-client>=2.174.0",
     "google-auth>=2.40.3",
     "google-auth-httplib2>=0.2.0",
+    "loguru>=0.7.3",
     "orjson>=3.10.18",
     "pandas>=2.3.0",
     "pyarrow>=20.0.0",

@@ -1,20 +1,23 @@
-# import relevant pacakges
 from pathlib import Path
 import os
+import json
 from googleapiclient.discovery import build
 import google.oauth2
 from google.auth.credentials import Credentials
 import pandas as pd
 import numpy as np
-import fastapi
-from dotenv import load_dotenv
-from fastapi import FastAPI
 from con_spreadsheet import ConSpreadsheet
+from dotenv import load_dotenv
+import fastapi
+from fastapi import FastAPI
+from loguru import logger
 from guidebook import Guidebook
 
 
 load_dotenv()
 app = FastAPI(default_response_class=fastapi.responses.ORJSONResponse)
+
+logger.add("./cache/log.txt", rotation="1 MB", serialize=True)
 
 
 def update_guidebook_cache(
@@ -39,10 +42,7 @@ def update_guidebook_cache(
     df.to_feather(cache_path / "locations.feather")
     response_urls += urls
 
-    return {
-        "status": "success",
-        "urls": response_urls
-    }
+    return {"status": "success", "urls": response_urls}
 
 
 def get_credentials() -> Credentials:
@@ -60,7 +60,7 @@ def get_credentials() -> Credentials:
 
 @app.get("/")
 async def root():
-    return {"message": "Hello world"}
+    return {"message": "Digital signage caching server"}
 
 
 def convert_for_response(value):
@@ -83,6 +83,7 @@ def build_df_response(df: pd.DataFrame) -> dict:
 
 
 @app.get("/api/v1.1/schedule-tracks")
+@logger.catch
 async def get_schedule_tracks(guide: int | None = None):
     df = pd.read_feather("./cache/schedule_tracks.feather")
     if guide is not None:
@@ -92,6 +93,7 @@ async def get_schedule_tracks(guide: int | None = None):
 
 
 @app.get("/api/v1.1/locations")
+@logger.catch
 async def get_locations(guide: int | None = None):
     df = pd.read_feather("./cache/locations.feather")
     if guide is not None:
@@ -101,6 +103,7 @@ async def get_locations(guide: int | None = None):
 
 
 @app.get("/api/v1.1/sessions")
+@logger.catch
 async def get_sessions(guide: int | None = None):
     df = pd.read_feather("./cache/sessions.feather")
     if guide is not None:
@@ -110,11 +113,29 @@ async def get_sessions(guide: int | None = None):
 
 
 @app.post("/svc/pull/{con}")
+@logger.catch
 async def pull_guidebook_data(con: str):
     guidebook = Guidebook(os.environ["GUIDEBOOK_API_KEY"])
-    guide_id = {"otakon25": 208676}[con]
+
+    try:
+        guide_id = int(con)
+    except Exception:
+        guide_id = {"zenkaikon25": 208676, "otakon24": 191558}[con]
+
     result = update_guidebook_cache(guidebook, guide_id)
     return result
+
+
+@app.get("/svc/log")
+@logger.catch
+async def get_log():
+    log_path = Path("./cache/log.txt")
+    if log_path.exists():
+        return {
+            "log": [json.loads(line) for line in open(log_path).readlines()]
+        }
+    else:
+        return {"log": []}
 
 
 def main():

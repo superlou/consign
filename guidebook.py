@@ -1,3 +1,4 @@
+from loguru import logger
 import requests
 
 
@@ -12,7 +13,7 @@ class Guidebook:
 
     def get_response(self, url, params=None) -> requests.Response:
         response = requests.get(url, params=params, headers=self.headers())
-        print(response.url)
+        logger.info("Requested {}", response.url)
         return response
 
     def get_guides(self):
