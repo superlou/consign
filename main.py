@@ -10,6 +10,7 @@ from con_spreadsheet import ConSpreadsheet
 from dotenv import load_dotenv
 import fastapi
 from fastapi import FastAPI
+from pydantic import BaseModel
 from loguru import logger
 from guidebook import Guidebook
 
@@ -112,10 +113,14 @@ async def get_sessions(guide: int | None = None):
     return build_df_response(df)
 
 
+class PullData(BaseModel):
+    guidebook_api_key: str
+
+
 @app.post("/svc/pull/{con}")
 @logger.catch
-async def pull_guidebook_data(con: str):
-    guidebook = Guidebook(os.environ["GUIDEBOOK_API_KEY"])
+async def pull_guidebook_data(con: str, pull_data: PullData):
+    guidebook = Guidebook(pull_data.guidebook_api_key)
 
     try:
         guide_id = int(con)
