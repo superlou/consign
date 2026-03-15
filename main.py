@@ -125,7 +125,7 @@ async def pull_guidebook_data(con: str, pull_data: PullData):
     try:
         guide_id = int(con)
     except Exception:
-        guide_id = {"zenkaikon25": 208676, "otakon24": 191558}[con]
+        guide_id = {"zenkaikon25": 208676, "otakon24": 191558, "zenkaikon26": 208677}[con]
 
     result = update_guidebook_cache(guidebook, guide_id)
     return result
